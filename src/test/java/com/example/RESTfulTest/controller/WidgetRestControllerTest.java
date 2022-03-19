@@ -159,4 +159,18 @@ class WidgetRestControllerTest {
 
     }
 
+    @Test
+    @DisplayName("GET /rest/widget/{id}")
+    void getWidgetTest() throws Exception {
+        Optional<Widget> widgetPut = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+
+        doReturn(widgetPut).when(service).findById(1l);
+
+        mockMvc.perform(get("/rest/widget/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(asJsonString(widgetPut))
+                        .header(HttpHeaders.IF_MATCH,"1"))
+                .andExpect(status().isOk());
+    }
+
 }
