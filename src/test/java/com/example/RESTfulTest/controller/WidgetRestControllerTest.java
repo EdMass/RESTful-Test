@@ -4,8 +4,10 @@ import com.example.RESTfulTest.model.Widget;
 import com.example.RESTfulTest.service.WidgetService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -107,12 +109,54 @@ class WidgetRestControllerTest {
     }
 
 
+
+
     static String asJsonString(final Object obj) {
         try {
             return new ObjectMapper().writeValueAsString(obj);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    @Test
+    @DisplayName("PUT /rest/widget/{id}")
+    void updateWidgetTest() throws Exception {
+        Optional<Widget> widgetPut = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+        Widget widgetPut2 = new Widget(1l, "Widget Name 2", "Description 2", 2);
+
+        doReturn(widgetPut).when(service).findById(1l);
+        doReturn(widgetPut2).when(service).save(any());
+
+        mockMvc.perform(put("/rest/widget/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(asJsonString(widgetPut2))
+                        .header(HttpHeaders.IF_MATCH,"1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("PUT /rest/widget/1 - BadRequest")
+    void updateWidgetBadRequestTest() throws Exception {
+        doReturn(Optional.empty()).when(service).findById(1l);
+
+        mockMvc.perform(put("/rest/widget/{id}", 1L))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /rest/widget/1 - isNotFound()")
+    void updateWidgetisNotFound()throws Exception {
+        Optional<Widget> widgetPut = Optional.of(new Widget(1l, "Widget Name", "Description", 1));
+        doReturn(Optional.empty()).when(service).findById(1l);
+
+        mockMvc.perform(put("/rest/widget/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(asJsonString(widgetPut))
+                .header(HttpHeaders.IF_MATCH,"1"))
+                        .andExpect(status().isNotFound());
+
     }
 
 }
